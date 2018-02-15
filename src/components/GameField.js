@@ -41,7 +41,7 @@ class GameField extends Component {
             });
             this.pickCity();
         }
-        // idk why ymap does not resize properly, so i do this. sorry about that
+        // ymap does not resize properly otherwise, so i did this. sorry about that
         if(this.props.gameState == gameStates.RUNNING && nextProps.gameState == gameStates.FINISHED) {
             this.setState({
                 mapWidth: '99.99%'
@@ -69,7 +69,6 @@ class GameField extends Component {
             this.setState({
                 recognizing: false
             });
-            Console.log('ended');
         };
         this.recognition.onnomatch = () => Console.log('No match');
         this.recognition.onerror = error => Console.error('An error occured: ', error.value);
