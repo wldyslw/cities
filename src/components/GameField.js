@@ -9,7 +9,7 @@ import {
 } from 'react-bootstrap';
 import { YMaps, Map, Placemark } from 'react-yandex-maps';
 import CitiesInput from './CitiesInput';
-import { changeGameStatus, proposeCity } from '../actions';
+import { changeGameStatus, proposeCity, resetState } from '../actions';
 import { gameStates, members, deprecatedLetters, SR, Console } from '../constants';
 
 class GameField extends Component {
@@ -24,7 +24,8 @@ class GameField extends Component {
             inputValue: '',
             inputValidationState: null,
             placemarks: [],
-            recognizing: false
+            recognizing: false,
+            mapWidth: '100%'
         };
     }
 
@@ -32,14 +33,24 @@ class GameField extends Component {
         this.pickCity();
     }
 
+    componentWillReceiveProps(nextProps) {
+        if(this.props.gameState == gameStates.FINISHED && nextProps.gameState == gameStates.RUNNING) {
+            this.setState({
+                placemarks: [],
+                mapWidth: '100%'
+            });
+            this.pickCity();
+        }
+        // idk why ymap does not resize properly, so i do this. sorry about that
+        if(this.props.gameState == gameStates.RUNNING && nextProps.gameState == gameStates.FINISHED) {
+            this.setState({
+                mapWidth: '99.99%'
+            });
+        }
+    }
+
     initSR() {
-        // const cities = Object.keys(this.props.cities)
-        //     .reduce((accum, key) => [...accum, ...this.props.cities[key]], []);
-        // const grammar = '#JSGF V1.0; grammar cities; public <city> = ' + cities.join(' | ') + ' ;';
-        // const speechRecognitionList = new SR.SpeechGrammarList();
-        // speechRecognitionList.addFromString(grammar, 1);
         this.recognition = new SR.SpeechRecognition();
-        // this.recognition.grammars = speechRecognitionList;
         this.recognition.lang = 'ru-RU';
         this.recognition.interimResults = false;
         this.recognition.maxAlternatives = 1;
@@ -130,30 +141,43 @@ class GameField extends Component {
     render() {
         return (
             <div>
-                <PageHeader>
-                    Следующая буква: {this.determineNextLetter(this.props.usedCities.length ? this.props.usedCities[0].city.name : 'минск').toUpperCase()}
-                    <small>{this.state.recognizing ? ' Говорите...' : ''}</small>
-                    <div className='pull-right'><Button onClick={() => this.props.endGame()} bsStyle='primary'>Закончить игру</Button></div>
-                </PageHeader>
-                <CitiesInput 
-                    value={this.state.inputValue} 
-                    onRecord={() => this.state.recognizing ? this.recognition.stop() : this.recognition.start()}
-                    onSubmit={this.handleSubmit} 
-                    validationState={this.state.inputValidationState} 
-                    onChange={this.handleChange}
-                />
+                {
+                    this.props.gameState == gameStates.RUNNING
+                        ? (
+                            <div>
+                                <PageHeader>
+                                    Следующая буква: {this.determineNextLetter(this.props.usedCities.length ? this.props.usedCities[0].city.name : 'минск').toUpperCase()}
+                                    <small>{this.state.recognizing ? ' Говорите...' : ''}</small>
+                                    <div className='pull-right'><Button onClick={() => this.props.endGame()} bsStyle='primary'>Закончить игру</Button></div>
+                                </PageHeader>
+                                <CitiesInput 
+                                    value={this.state.inputValue} 
+                                    onRecord={() => this.state.recognizing ? this.recognition.stop() : this.recognition.start()}
+                                    onSubmit={this.handleSubmit} 
+                                    validationState={this.state.inputValidationState} 
+                                    onChange={this.handleChange}
+                                />
+                            </div>
+                        )
+                        : (
+                            <PageHeader>
+                                Игра окончена <small>Счет: {this.props.usedCities.filter(e => e.member.name == members.player.name).length}</small>
+                                <div className='pull-right'><Button onClick={() => this.props.restartGame()} bsStyle='primary'>Сыграть снова</Button></div>
+                            </PageHeader>
+                        )
+                }
                 <Row>
-                    <Col xs={12} md={6}>
+                    <Col xs={12} md={this.props.gameState == gameStates.RUNNING ? 6 : 12}>
                         <YMaps className='ymap'>
-                            <Map state={{center: [0,0], zoom: 1}} width='100%' height={400}>
+                            <Map state={{center: [0,0], zoom: 1}} width={this.state.mapWidth} height={400}>
                                 {this.state.placemarks.map(e => e)}
                             </Map>
                         </YMaps>
                     </Col>
-                    <Col xs={12} md={6}>
+                    <Col xs={12} md={this.props.gameState == gameStates.RUNNING ? 6 : 12}>
                         <h3>Последние названные города:</h3>
                         {this.props.usedCities.map((e, i) => {
-                            if(i < 5) return (
+                            if(i < 5 || this.props.gameState == gameStates.FINISHED) return (
                                 <Panel 
                                     key={e.city.name} 
                                     bsStyle={e.member.name == members.player.name ? 'primary' : 'danger'}
@@ -172,10 +196,15 @@ class GameField extends Component {
 export default connect(
     state => ({
         cities: state.game.cities,
-        usedCities: state.game.usedCitiesStack
+        usedCities: state.game.usedCitiesStack,
+        gameState: state.game.status
     }),
     dispatch => ({
         endGame: () => dispatch(changeGameStatus(gameStates.FINISHED)),
+        restartGame: () => {
+            dispatch(resetState());
+            dispatch(changeGameStatus(gameStates.RUNNING));
+        },
         proposeCity: (city, member) => dispatch(proposeCity(city, member))
     })
 )(GameField);

@@ -5,6 +5,10 @@ export const changeGameStatus = status => ({
     status
 });
 
+export const resetState = () => ({
+    type: 'RESET_STATE'
+});
+
 export const proposeCity = (city, member) => ({
     type: 'PROPOSE_CITY',
     city,

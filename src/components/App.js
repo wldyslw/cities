@@ -33,11 +33,8 @@ class App extends Component {
                 </p>
             </Jumbotron>
         );
-        case gameStates.RUNNING: return (
+        case gameStates.RUNNING: case gameStates.FINISHED: return (
             <GameField />
-        );
-        case gameStates.FINISHED: return (
-            <p>You loose. again.</p>
         );
         }
     }
