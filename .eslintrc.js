@@ -1,7 +1,8 @@
 module.exports = {
     "env": {
         "browser": true,
-        "es6": true
+        "es6": true,
+        'commonjs': true
     },
     "extends": [
         "eslint:recommended",
@@ -22,6 +23,7 @@ module.exports = {
             "error",
             4
         ],
+        "react/prop-types": [0],
         "linebreak-style": [
             "error",
             "unix"
