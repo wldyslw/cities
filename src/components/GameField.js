@@ -10,7 +10,7 @@ import {
 import { YMaps, Map, Placemark } from 'react-yandex-maps';
 import CitiesInput from './CitiesInput';
 import { changeGameStatus, proposeCity } from '../actions';
-import { gameStates, members, deprecatedLetters } from '../constants';
+import { gameStates, members, deprecatedLetters, SR, Console } from '../constants';
 
 class GameField extends Component {
     constructor(props) {
@@ -19,15 +19,49 @@ class GameField extends Component {
         this.handleChange = this.handleChange.bind(this);
         this.addMapMarker = this.addMapMarker.bind(this);
         this.pickCity = this.pickCity.bind(this);
+        this.initSR.bind(this)();
         this.state = {
             inputValue: '',
             inputValidationState: null,
-            placemarks: []
+            placemarks: [],
+            recognizing: false
         };
     }
 
     componentDidMount() {
         this.pickCity();
+    }
+
+    initSR() {
+        // const cities = Object.keys(this.props.cities)
+        //     .reduce((accum, key) => [...accum, ...this.props.cities[key]], []);
+        // const grammar = '#JSGF V1.0; grammar cities; public <city> = ' + cities.join(' | ') + ' ;';
+        // const speechRecognitionList = new SR.SpeechGrammarList();
+        // speechRecognitionList.addFromString(grammar, 1);
+        this.recognition = new SR.SpeechRecognition();
+        // this.recognition.grammars = speechRecognitionList;
+        this.recognition.lang = 'ru-RU';
+        this.recognition.interimResults = false;
+        this.recognition.maxAlternatives = 1;
+        this.recognition.onstart = () => this.setState({
+            recognizing: true
+        });
+        this.recognition.onresult = event => {
+            this.setState({
+                inputValue: event.results[event.results.length - 1][0].transcript,
+                inputValidationState: null
+            });
+            setTimeout(() => this.handleSubmit(), 800);
+        };
+        this.recognition.onspeechend = this.recognition.onend = () => {
+            this.recognition.stop();
+            this.setState({
+                recognizing: false
+            });
+            Console.log('ended');
+        };
+        this.recognition.onnomatch = () => Console.log('No match');
+        this.recognition.onerror = error => Console.error('An error occured: ', error.value);
     }
 
     handleChange(event) {
@@ -97,11 +131,13 @@ class GameField extends Component {
         return (
             <div>
                 <PageHeader>
-                    Текущая буква: {this.determineNextLetter(this.props.usedCities.length ? this.props.usedCities[0].city.name : 'сызрвеь').toUpperCase()}
+                    Следующая буква: {this.determineNextLetter(this.props.usedCities.length ? this.props.usedCities[0].city.name : 'минск').toUpperCase()}
+                    <small>{this.state.recognizing ? ' Говорите...' : ''}</small>
                     <div className='pull-right'><Button onClick={() => this.props.endGame()} bsStyle='primary'>Закончить игру</Button></div>
                 </PageHeader>
                 <CitiesInput 
                     value={this.state.inputValue} 
+                    onRecord={() => this.state.recognizing ? this.recognition.stop() : this.recognition.start()}
                     onSubmit={this.handleSubmit} 
                     validationState={this.state.inputValidationState} 
                     onChange={this.handleChange}

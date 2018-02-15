@@ -7,8 +7,6 @@ import {
     NavItem,
     Jumbotron,
     Button
-    //Col,
-    //Row
 } from 'react-bootstrap';
 import GameField from './GameField';
 import { getCities, changeGameStatus } from '../actions';

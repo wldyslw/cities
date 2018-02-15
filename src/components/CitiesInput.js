@@ -31,6 +31,7 @@ class CitiesInput extends Component {
                         <Button 
                             title='Голосовой ввод' 
                             bsSize='large' bsStyle='primary'
+                            onClick={() => this.props.onRecord()}
                         >
                             <i className="fas fa-microphone"></i>
                         </Button>
@@ -48,6 +49,7 @@ class CitiesInput extends Component {
                         value={this.props.value} onChange={this.handleChange} 
                         onKeyPress={this.handleSubmit} 
                         type='text' 
+                        placeholder='Введите название города или используйте голосовой ввод'
                     />
                 </InputGroup>
                 <FormControl.Feedback />

@@ -17,4 +17,10 @@ export const members = {
 
 export const deprecatedLetters = ['ъ', 'ь', 'ы'];
 
+export const SR = {
+    SpeechRecognition: window.SpeechRecognition || window.webkitSpeechRecognition,
+    SpeechGrammarList: window.SpeechGrammarList || window.webkitSpeechGrammarList,
+    SpeechRecognitionEvent: window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent
+};
+
 export const Console = console;
