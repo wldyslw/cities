@@ -90,8 +90,8 @@ class GameField extends Component {
             placemarks: [ 
                 <Placemark 
                     key={name} 
-                    geometry={{'coordinates': [lat, lng]}} 
-                    properties={{'hintContent': name}}
+                    geometry={{coordinates: [lat, lng]}} 
+                    properties={{hintContent: name}}
                 />,
                 ...prevState.placemarks
             ]
